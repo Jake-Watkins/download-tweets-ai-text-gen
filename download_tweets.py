@@ -1,4 +1,5 @@
-import twint
+from gingerit.gingerit import GingerIt
+from langdetect import detect
 import fire
 import re
 import csv
@@ -33,6 +34,21 @@ def is_reply(tweet):
     return False
 
 
+def FilterTweet(tweet):
+    try:
+        if tweet == '':
+            return False
+        if(detect(tweet)!='en'):
+            return False
+        ginger_parser = GingerIt()
+        ginger_grammar_results = ginger_parser.parse(tweet)
+        ginger_corrections = ginger_grammar_results['corrections']
+        if len(ginger_corrections) >= 5:
+            return False
+        return True
+    except:
+        return False
+
 def download_tweets(username=None, limit=None, include_replies=False,
                     strip_usertags=False, strip_hashtags=False):
     """Download public Tweets from a given Twitter account
@@ -44,19 +60,12 @@ def download_tweets(username=None, limit=None, include_replies=False,
     :param strip_hashtags: Whether to remove hashtags from the tweets.
     """
 
-    assert username, "You must specify a username to download tweets from."
     if limit:
         assert limit % 20 == 0, "`limit` must be a multiple of 20."
 
     # If no limit specifed, estimate the total number of tweets from profile.
     else:
-        c_lookup = twint.Config()
-        c_lookup.Username = username
-        c_lookup.Store_object = True
-        c_lookup.Hide_output = True
-
-        twint.run.Lookup(c_lookup)
-        limit = twint.output.users_list[0].tweets
+        limit = 100
 
     pattern = r'http\S+|pic\.\S+|\xa0|…'
 
@@ -70,7 +79,7 @@ def download_tweets(username=None, limit=None, include_replies=False,
     with open('.temp', 'w', encoding='utf-8') as f:
         f.write(str(-1))
 
-    print("Retrieving tweets for @{}...".format(username))
+    print("Retrieving tweets for {}...".format(username))
 
     with open('{}_tweets.csv'.format(username), 'w', encoding='utf8') as f:
         w = csv.writer(f)
@@ -87,7 +96,7 @@ def download_tweets(username=None, limit=None, include_replies=False,
                     c = twint.Config()
                     c.Store_object = True
                     c.Hide_output = True
-                    c.Username = username
+                    c.Search = username
                     c.Limit = 40
                     c.Resume = '.temp'
 
@@ -117,13 +126,16 @@ def download_tweets(username=None, limit=None, include_replies=False,
                 # it is a de-facto reply.
                 for tweet in tweets:
                     if tweet != '' and not tweet.startswith('@'):
-                        w.writerow([tweet])
+                        tweet = ''.join(filter(str.isalnum, tweet))
+                        if FilterTweet(tweet):
+                            w.writerow([tweet])
             else:
                 tweets = [re.sub(pattern, '', tweet.tweet).strip()
                           for tweet in tweet_data]
 
                 for tweet in tweets:
-                    if tweet != '':
+                    tweet = ''.join(filter(str.isalnum, tweet))
+                    if FilterTweet(tweet):
                         w.writerow([tweet])
 
             if i > 0:
@@ -141,4 +153,6 @@ def download_tweets(username=None, limit=None, include_replies=False,
 
 
 if __name__ == "__main__":
-    fire.Fire(download_tweets)
+
+    username = 'Fake News'
+    download_tweets(username = username, limit = 50000)
