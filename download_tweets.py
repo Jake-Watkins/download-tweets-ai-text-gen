@@ -1,3 +1,4 @@
+import twint
 from gingerit.gingerit import GingerIt
 from langdetect import detect
 import fire
