@@ -82,7 +82,7 @@ def download_tweets(username=None, limit=None, include_replies=False,
 
     print("Retrieving tweets for {}...".format(username))
 
-    with open('{}_tweets.csv'.format(username), 'w', encoding='utf8') as f:
+    with open('{}_tweets.txt'.format(username), 'w', encoding='utf8') as f:
         w = csv.writer(f)
         w.writerow(['tweets'])  # gpt-2-simple expects a CSV header by default
 
@@ -127,15 +127,15 @@ def download_tweets(username=None, limit=None, include_replies=False,
                 # it is a de-facto reply.
                 for tweet in tweets:
                     if tweet != '' and not tweet.startswith('@'):
-                        tweet = ''.join(filter(str.isalnum, tweet))
+                        tweet = ''.join(filter(str.isalnum or str==' ', tweet))
                         if FilterTweet(tweet):
                             w.writerow([tweet])
             else:
                 tweets = [re.sub(pattern, '', tweet.tweet).strip()
-                          for tweet in tweet_data]
+                        for tweet in tweet_data]
 
                 for tweet in tweets:
-                    tweet = ''.join(filter(str.isalnum, tweet))
+                    tweet = ''.join(filter(str.isalnum or str==' ', tweet))
                     if FilterTweet(tweet):
                         w.writerow([tweet])
 
@@ -156,4 +156,4 @@ def download_tweets(username=None, limit=None, include_replies=False,
 if __name__ == "__main__":
 
     username = 'Fake News'
-    download_tweets(username = username, limit = 50000)
+    download_tweets(username = username, limit = 200000)
