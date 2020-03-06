@@ -50,7 +50,18 @@ def FilterTweet(tweet):
     except:
         return False
 
-def download_tweets(username=None, limit=None, include_replies=False,
+def FilterFunction(str):
+    if str.isalnum:
+        return True
+    if str==' ':
+        return True
+    if str=='#':
+        return True
+    if str=='@':
+        return True
+    return False
+
+def download_tweets(username=None, limit=1000, include_replies=False,
                     strip_usertags=False, strip_hashtags=False):
     """Download public Tweets from a given Twitter account
     into a format suitable for training with AI text generation tools.
@@ -61,12 +72,7 @@ def download_tweets(username=None, limit=None, include_replies=False,
     :param strip_hashtags: Whether to remove hashtags from the tweets.
     """
 
-    if limit:
-        assert limit % 20 == 0, "`limit` must be a multiple of 20."
-
-    # If no limit specifed, estimate the total number of tweets from profile.
-    else:
-        limit = 100
+    assert limit % 20 == 0, "`limit` must be a multiple of 20."
 
     pattern = r'http\S+|pic\.\S+|\xa0|…'
 
@@ -127,17 +133,23 @@ def download_tweets(username=None, limit=None, include_replies=False,
                 # it is a de-facto reply.
                 for tweet in tweets:
                     if tweet != '' and not tweet.startswith('@'):
-                        tweet = ''.join(filter(str.isalnum or str==' ', tweet))
+                        tweet = ''.join(filter(FilterFunction, tweet))
                         if FilterTweet(tweet):
                             w.writerow([tweet])
+                        else:
+                            limit = limit + 1
+                    else:
+                        limit = limit + 1
             else:
                 tweets = [re.sub(pattern, '', tweet.tweet).strip()
                         for tweet in tweet_data]
 
                 for tweet in tweets:
-                    tweet = ''.join(filter(str.isalnum or str==' ', tweet))
+                    tweet = ''.join(filter(FilterFunction, tweet))
                     if FilterTweet(tweet):
                         w.writerow([tweet])
+                    else:
+                        limit = limit + 1
 
             if i > 0:
                 pbar.update(20)
@@ -156,4 +168,4 @@ def download_tweets(username=None, limit=None, include_replies=False,
 if __name__ == "__main__":
 
     username = 'Fake News'
-    download_tweets(username = username, limit = 200000)
+    download_tweets(username = username, limit = 1000)
