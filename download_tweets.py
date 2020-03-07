@@ -168,4 +168,4 @@ def download_tweets(username=None, limit=1000, include_replies=False,
 if __name__ == "__main__":
 
     username = 'Fake News'
-    download_tweets(username = username, limit = 1000)
+    download_tweets(username = username, limit = 100000)
